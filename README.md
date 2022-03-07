@@ -1,3 +1,5 @@
+A lightweight wrapper for the [MealViewer](https://schools.mealviewer.com/) API
+
 ## Finding your school
 find your school by going to [MealViewer](https://schools.mealviewer.com/) and searching for your school
 

@@ -8,8 +8,11 @@ const error = (msg) => {
 /**
  * @param {string} school the school to return.
  * @param {string | number} [date] the date or timestamp to use.
- * @param {{rawData?: boolean, url?:boolean}} [options]
+ * @param {{rawData?: boolean, url?:boolean, date?: boolean}} [options] rawData: returns the response data, url: returns the api url, date: returns the date used
  * @returns {Promise<object> | Error}
+ * @example api.get('mySchool')
+ * api.get('mySchool', 1646666562)
+ * api.get('mySchool', null, {rawData: true, url: true})
  */
 exports.get = async (school, date, options) => {
     const baseURL = 'https://api.mealviewer.com/api/v4/school'
@@ -18,7 +21,7 @@ exports.get = async (school, date, options) => {
     if (date && (typeof date !== 'string' || typeof date !== 'number')) error('Invalid date!\n  Must be STRING or NUMBER');
 
     //formats date
-    if (!date) date = Date.now();
+    if (!date || date === null) date = Date.now();
     date = new Date(date)
         .toLocaleDateString()
         .split('/')
@@ -44,6 +47,7 @@ exports.get = async (school, date, options) => {
     //adds any additional data
     if (options?.rawData) respose.rawData = res
     if (options?.url) respose.url = url
+    if (options?.date) respose.date = date
 
     return respose
 }

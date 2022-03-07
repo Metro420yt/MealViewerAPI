@@ -2,7 +2,8 @@ declare module 'mealviewerapi';
 
 interface options {
     rawData?: boolean,
-    url?: boolean
+    url?: boolean,
+    date?: boolean
 }
 
 export function get(
