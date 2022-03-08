@@ -1,8 +1,5 @@
 const fetch = require('node-fetch')
-const error = (msg) => {
-    console.log(new Error(msg))
-    process.exit(1)
-}
+const error = (msg) => { throw new Error(msg) }
 
 
 /**
@@ -16,6 +13,8 @@ const error = (msg) => {
  */
 exports.get = async (school, date, options) => {
     const baseURL = 'https://api.mealviewer.com/api/v4/school'
+
+    //verifies  data
     if (!school) error('School name must be provided!');
     if (typeof school !== 'string') error('Invalid school name!\n  Must be STRING');
     if (date && (typeof date !== 'string' || typeof date !== 'number')) error('Invalid date!\n  Must be STRING or NUMBER');
@@ -33,12 +32,17 @@ exports.get = async (school, date, options) => {
     var respose = {}
 
     //gets menu data from results
-    res.menuSchedules.map(data => data.menuBlocks)
+    res.menuSchedules
+        .map(data => data.menuBlocks)
         .forEach(blocks => blocks.forEach(block => {
+
+            //gets items array
             const items = [];
-            block.cafeteriaLineList.data[0].foodItemList.data.map(food => food.item_Name.toLowerCase()).forEach(item => {
-                if (!items.includes(item)) items.push(item)
-            })
+            block.cafeteriaLineList.data[0].foodItemList.data
+                .map(food => food.item_Name.toLowerCase())
+                .forEach(item => {
+                    if (!items.includes(item)) items.push(item)
+                })
 
             //adds data to respons var
             respose[block.blockName.toLowerCase()] = items
