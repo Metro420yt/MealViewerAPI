@@ -6,6 +6,11 @@ interface options {
     date?: boolean
 }
 
+interface date {
+    start?: boolean,
+    end?: boolean
+}
+
 export function get(
     school: string,
     date?: string | number,
