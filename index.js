@@ -49,7 +49,7 @@ exports.get = async (school, date, options) => {
   const url = `${baseURL}/${school}/${date}`;
   const res = await (await fetch(url).catch(e => { throw new Error(e) })).json();
   
-  const resposeArray = [];
+  const resposeItems = [];
 
   //gets menu data from results
   res.menuSchedules
@@ -69,12 +69,12 @@ exports.get = async (school, date, options) => {
       })
       //adds date and menu
       if (options?.date && Object.keys(menu).length !== 0) menu.date = blocks.dateInformation.dateFull
-      resposeArray.push(menu)
+      resposeItems.push(menu)
     }
     );
 
   //adds any additional data
-  var respose = {items: resposeArray.filter(menu=>Object.keys(menu).length !== 0)};
+  var respose = {items: resposeItems.filter(menu=>Object.keys(menu).length !== 0)};
   if (options?.rawData) respose.rawData = res;
   if (options?.url) respose.url = url;
 
