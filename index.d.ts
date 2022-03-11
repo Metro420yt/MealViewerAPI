@@ -11,8 +11,15 @@ interface date {
   end?: boolean;
 }
 
+interface response {
+  items: object[],
+  date?: string,
+  rawData?: object,
+  url?: string
+}
+
 export function get(
   school: string,
   date?: string | number,
   options?: options
-): Promise<object> | Error;
+): Promise<response> | Error;

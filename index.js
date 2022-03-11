@@ -4,7 +4,7 @@ const fetch = require("node-fetch");
  * @param {string} school the school to return.
  * @param {string | number | object} [date] the date or timestamp to use.
  * @param {{rawData?: boolean, url?:boolean, date?: boolean}} [options] rawData: returns the response data, url: returns the api url, date: returns the date used
- * @returns {Promise<object> | Error}
+ * @returns {Promise<{items: object[], date?: string, rawData?: object, url?: string}> | Error}
  * @example api.get('mySchool')
  * api.get('mySchool', 1646666562)
  * api.get('mySchool', null, {rawData: true, url: true})
@@ -15,6 +15,7 @@ exports.get = async (school, date, options) => {
   //verifies  data
   if (!school) throw new Error("School name must be provided!");
   if (typeof school !== "string") throw new Error("Invalid school name!\n  Must be STRING");
+  school = school.split(' ').join('')
 
   if (date && (
     typeof date !== "string" &&
