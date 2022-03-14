@@ -20,6 +20,6 @@ interface response {
 
 export function get(
   school: string,
-  date?: string | number,
+  date?: string | number | date,
   options?: options
 ): Promise<response> | Error;
