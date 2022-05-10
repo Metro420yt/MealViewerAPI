@@ -1,13 +1,11 @@
 {
   "name": "mealviewerapi",
-  "version": "2",
+  "version": "2.0.0",
   "description": "A lightweight wrapper for the API",
   "main": "index.js",
   "types": "index.d.ts",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "keywords": [
+    "mealviewerapi",
     "mealviewer",
     "api",
     "wrapper"

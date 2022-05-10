@@ -14,6 +14,17 @@ flexible to show any listed menu type.
 
 ## Changelog
 #### v2.0
+- added menu types for intellisense
+
+- changed url keys
+
+```
+> response.url = https://schools.mealviewer.com/school/{YourSchool}
+
++ response.apiURL = https://api.mealviewer.com/api/v4/school/{YourSchool}
+```
+
+
 - Now using constructor
 
 ```
@@ -38,6 +49,10 @@ const api = require('mealviewerapi')
 ```
 + mv.daily.on('newDay', data => {})
 ```
+
+
+- node-fetch dependancy is now set to v2
+ - mealviewerapi is a CJS file, while node-fetch v3 is an ESM file making v3 unusable with CJS files
 
 #### v1.5
 - get function now accepts start and end date
