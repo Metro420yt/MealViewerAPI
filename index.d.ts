@@ -1,25 +1,44 @@
 declare module "mealviewerapi";
 
-interface options {
+interface optionsObject {
   rawData?: boolean;
   url?: boolean;
   date?: boolean;
+  dailyInterval?: number;
 }
 
-interface date {
+interface dateObject {
   start?: boolean;
   end?: boolean;
 }
 
-interface response {
+interface getResponse {
   items: object[],
   date?: string,
   rawData?: object,
   url?: string
 }
 
-export function get(
-  school: string,
-  date?: string | number | date,
-  options?: options
-): Promise<response> | Error;
+interface dailyResponse {
+  items: object[],
+  date?: string,
+  rawData?: object,
+  url?: string
+}
+
+
+export class Client {
+  constructor(school: string, options:optionsObject);
+
+  public get(
+    date?: string | number | dateObject,
+    options?: optionsObject
+  ): Promise<getResponse> | Error;
+
+  public daily: {
+    on(event: 'check', listener:()=>void): this
+    on(event: 'newDay', listener:(data:getResponse) => void): this
+  }
+
+  private async _check (): Promise<getResponse> | Error;
+}
