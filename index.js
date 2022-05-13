@@ -115,6 +115,7 @@ class Client {
     if (options?.url) respose.url = `${urls.public}/${this.school}`;
     if (options?.apiURL) respose.apiURL = url;
 
+    // if (Object.keys(respose.menu).length > 0) return respose; // quick fix if broken
     return respose;
   }
 
@@ -125,7 +126,7 @@ class Client {
 
     var createFile = false
     if (!fs.existsSync(file)) createFile = true
-    if (createFile = true || today !== fs.readFileSync(file, 'utf8')) {
+    if (createFile === true || today !== fs.readFileSync(file, 'utf8')) {
       const data = (await this.get(undefined, { dailyResponse: true }))
 
       if (data) this.daily.emit('newMenu', data)
