@@ -1,60 +1,56 @@
 const fetch = require('node-fetch')
 const { EventEmitter } = require('events')
-const fs = require('fs')
+const { existsSync, readFileSync, writeFileSync } = require('fs')
 const urls = {
   api: 'https://api.mealviewer.com/api/v4/school',
   public: 'https://schools.mealviewer.com/school'
 }
 
 class Client {
-  constructor(school, options) {
+  constructor(school, options = {}) {
     // validates params
     if (!school) throw new Error("School name must be provided!");
     if (typeof school !== 'string') throw new Error('Invalid school name!\n  Must be STRING')
     for (const key in options) if (!['dailyInterval'].includes(key) && typeof options[key] !== 'boolean') throw new Error(`Invalid option value\n  ${key} must be a boolean`)
 
     this.school = school.split(' ').join('')
-    this.options = options
 
     // sets up daily check if in options
-    if (this.options?.dailyInterval) {
-      if (this.options.dailyInterval < 1000) {
-        this.options.dailyInterval = 30000
+    if (options?.daily || options?.dailyInterval) {
+      if (!options.dailyInterval) options.dailyInterval = 3600000
+      else if (options.dailyInterval < 1000) {
+        options.dailyInterval = 30000
         console.log('set dailyInterval to 30sec (30000ms)')
       }
+
       const ev = new EventEmitter()
       this.daily = ev
 
       this._check()
-      setInterval(async () => await this._check(), this.options?.dailyInterval)
+      setInterval(async () => await this._check(), this.options.dailyInterval)
+    }
+    else this.daily = {
+      on: (...args) => {
+        throw new Error('`options.daily` and `options.dailyInterval` is undefined')
+      }
     }
 
-    // see if this will work later
-    // this.daily = {
-    //   on: (...args) => {
-    //     if (!this.options?.dailyInterval) this.options.dailyInterval = 3600000 //1hr
-
-    //     this._check()
-    //     setInterval(async () => await this._check(), this.options?.dailyInterval)
-    //     return ev.on(...args)
-    //   },
-    //   emit: ev.emit
-    // }
+    this.options = options
   }
 
   /**
     * @param {string | number | object} [date] the date or timestamp to use.
     * @param {object} [config] the date or timestamp to use.
     * @returns {Promise<{items: object[], date?: string, rawData?: object, url?: string}> | Error}
-    * mv.get()
+    * @example mv.get()
     * mv.get(1646666562)
+    * mv.get('5/16/2022')
     * mv.get({start: 1646666562, end: 1646666562})
    **/
   async get(date, config = { dailyResponse: false }) {
     var { school, options } = this
 
     //verifies  data
-
     if (date && !['string', 'number', 'object'].includes(typeof date)) throw new Error("Invalid date!\n  Must be STRING, NUMBER or OBJECT");
 
 
@@ -78,7 +74,6 @@ class Client {
     //fetches data
     const url = `${urls.api}/${school}/${date}`;
     const res = await (await fetch(url).catch(e => { throw new Error(e) })).json();
-
     const resposeItems = [];
 
     //gets menu data from results.
@@ -115,22 +110,20 @@ class Client {
     if (options?.url) respose.url = `${urls.public}/${this.school}`;
     if (options?.apiURL) respose.apiURL = url;
 
-    // if (Object.keys(respose.menu).length > 0) return respose; // quick fix if broken
-    return respose;
+    if (config.dailyResponse && respose.menu) return respose;
+    else if (config?.dailyResponse === false) return respose;
   }
 
   async _check() {
-    this.daily.emit('check')
+    this.daily.emit('check', { message: `checked for new menu`, timestamp: Date.now() })
     const file = `${__dirname}\\lastRan.txt`
     const today = new Date(Date.now()).toLocaleDateString()
 
-    var createFile = false
-    if (!fs.existsSync(file)) createFile = true
-    if (createFile === true || today !== fs.readFileSync(file, 'utf8')) {
+    if (!existsSync(file) || today !== readFileSync(file, 'utf8')) {
       const data = (await this.get(undefined, { dailyResponse: true }))
 
-      if (data) this.daily.emit('newMenu', data)
-      fs.writeFileSync(file, today)
+      if (data !== undefined) this.daily.emit('newMenu', data)
+      writeFileSync(file, today)
     }
   }
 }

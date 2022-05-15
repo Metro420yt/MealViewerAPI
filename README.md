@@ -2,7 +2,11 @@
 # Main release soon
 
 A lightweight wrapper for the [MealViewer](https://mealviewer.com/) API
-<br><br>
+
+checkout the [examples](/MealViewerAPI/examples) for ideas<br>
+submit your own ideas by creating a pull request
+
+<br>
 
 ## Finding your school
 find your school by going to [MealViewer](https://schools.mealviewer.com/) and search for your school.
@@ -36,16 +40,8 @@ flexible to show any listed menu type.
 - Now using classes with constructor
 
 ```
-+ new mv(school, options?).get(date?)
++ new mv.Client(school, options?).get(date?)
 - mv.get(school, date?, options?)
-```
-<br>
-
-- Moved to Client export
-
-```
-+ new api.Client(school, options?).get(date?)
-- api.get(school, date?, options?)
 ```
 <br>
 
@@ -55,6 +51,8 @@ flexible to show any listed menu type.
 + mv.daily.on('newDay', data => {})
 ```
 
+<br>
+
 - node-fetch dependancy is now set to v2 instead of ^v2
  - mealviewerapi is a CJS file, while node-fetch v3 is an ESM file making v3 unusable with CJS files
 
@@ -62,7 +60,7 @@ flexible to show any listed menu type.
 - get function now accepts start and end date
 
 ```
-+ mv.get(school, {start, end})
++ mv.get(school, {start?, end?})
 ```
 
 

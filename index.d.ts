@@ -12,6 +12,7 @@ interface optionsObject {
   url?: boolean;
   apiURL?: boolean;
   date?: boolean;
+  daily?: boolean;
   dailyInterval?: number;
 }
 
@@ -48,12 +49,12 @@ export class Client {
     * const mv = new Client('mySchool')
     * mv.get()
     * mv.get(1646666562)
-    * mv.get('5/10/2022')
+    * mv.get('5/16/2022')
     * mv.get({start: 1646666562, end: 1646666562})
    */
   public get(
     date?: string | number | dateObject,
-    config?: {dailyResponse:boolean}
+    config?: { dailyResponse: boolean }
   ): Promise<getResponse> | Error;
 
   public daily: {
@@ -66,6 +67,7 @@ export class Client {
     on(event: string, listener: Function): void
     on(event: 'newMenu', listener: (data: dailyResponse) => void): void
     on(event: 'check', listener: () => void): void
+    on(event: 'check', listener: (data: { message: string, timestamp: number }) => void): void
   }
 
   private _check(): Promise<getResponse> | Error;
