@@ -3,7 +3,7 @@
 
 A lightweight wrapper for the [MealViewer](https://mealviewer.com/) API
 
-checkout the [examples](/MealViewerAPI/examples) for ideas<br>
+checkout the [examples](/examples) for ideas<br>
 submit your own ideas by creating a pull request
 
 <br>
