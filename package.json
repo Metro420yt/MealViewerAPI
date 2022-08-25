@@ -1,7 +1,7 @@
 {
   "name": "mealviewerapi",
   "version": "2.0.0",
-  "description": "A lightweight wrapper for the API",
+  "description": "A lightweight wrapper for the mealviewer API",
   "main": "index.js",
   "types": "index.d.ts",
   "keywords": [
@@ -11,8 +11,8 @@
     "wrapper"
   ],
   "author": {
-    "name" : "Metro420YT",
-    "url" : "https://bit.ly/Metro420YT"
+    "name": "Metro420YT",
+    "url": "https://bit.ly/Metro420YT"
   },
   "license": "ISC",
   "repository": {

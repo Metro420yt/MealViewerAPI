@@ -1,4 +1,5 @@
-const fetch = require('node-fetch')
+//@ts-check
+const { default: fetch } = require('node-fetch')
 const { EventEmitter } = require('events')
 const { existsSync, readFileSync, writeFileSync } = require('fs')
 const urls = {
@@ -7,13 +8,15 @@ const urls = {
 }
 
 class Client {
+  /**
+   * @param {string} school
+  */
   constructor(school, options = {}) {
     // validates params
-    if (!school) throw new Error("School name must be provided!");
+    if (!school || school === '<mySchool>') throw new Error("School name must be provided!");
     if (typeof school !== 'string') throw new Error('Invalid school name!\n  Must be STRING')
     for (const key in options) if (!['dailyInterval'].includes(key) && typeof options[key] !== 'boolean') throw new Error(`Invalid option value\n  ${key} must be a boolean`)
 
-    this.school = school.split(' ').join('')
 
     // sets up daily check if in options
     if (options?.daily || options?.dailyInterval) {
@@ -23,15 +26,17 @@ class Client {
         console.log('set dailyInterval to 30sec (30000ms)')
       }
 
-      const ev = new EventEmitter()
-      this.daily = ev
-
+      this.school = school.split(' ').join('')
+      this.daily = new EventEmitter()
       this._check()
-      setInterval(async () => await this._check(), this.options.dailyInterval)
+      setInterval(async () => await this._check(), options.dailyInterval)
     }
     else this.daily = {
       on: (...args) => {
-        throw new Error('`options.daily` and `options.dailyInterval` is undefined')
+        throw new Error('`options.daily` or `options.dailyInterval` is undefined')
+      },
+      emit: (...args) => {
+        throw new Error('unable to emit event')
       }
     }
 
@@ -41,15 +46,13 @@ class Client {
   /**
     * @param {string | number | object} [date] the date or timestamp to use.
     * @param {object} [config] the date or timestamp to use.
-    * @returns {Promise<{items: object[], date?: string, rawData?: object, url?: string}> | Error}
+    * @returns {Promise<{menu: object[], date?: string, rawData?: object, url?: string} | undefined>}
     * @example mv.get()
     * mv.get(1646666562)
     * mv.get('5/16/2022')
     * mv.get({start: 1646666562, end: 1646666562})
    **/
   async get(date, config = { dailyResponse: false }) {
-    var { school, options } = this
-
     //verifies  data
     if (date && !['string', 'number', 'object'].includes(typeof date)) throw new Error("Invalid date!\n  Must be STRING, NUMBER or OBJECT");
 
@@ -57,7 +60,7 @@ class Client {
     //formats date
     if (!date || date === null) date = Date.now();
     if (typeof date !== "object") {
-      date = new Date(date).toLocaleDateString().split("/").join("-");
+      date = new Date(date).toISOString().split('T')[0]
       date = `${date}/${date}`;
     }
     else {
@@ -65,14 +68,14 @@ class Client {
       if (!date.start) date.end = Date.now();
       if (!date.end) date.end = Date.now();
 
-      date.start = new Date(date.start).toLocaleDateString().split("/").join("-");
-      date.end = new Date(date.end).toLocaleDateString().split("/").join("-");
+      date.start = new Date(date.start).toISOString().split('T')[0]
+      date.end = new Date(date.end).toISOString().split('T')[0]
       date = `${date.start}/${date.end}`;
     }
 
 
     //fetches data
-    const url = `${urls.api}/${school}/${date}`;
+    const url = `${urls.api}/${this.school}/${date}`;
     const res = await (await fetch(url).catch(e => { throw new Error(e) })).json();
     const resposeItems = [];
 
@@ -97,8 +100,8 @@ class Client {
         })
         //adds date and menu
         if (Object.keys(menu).length === 0) return;
-        if (options?.date && config?.dailyResponse === false) menu.date = blocks.dateInformation.dateFull
-        else if (options?.date && config?.dailyResponse) respose.date = blocks.dateInformation.dateFull
+        if (this.options?.date && config?.dailyResponse === false) menu.date = blocks.dateInformation.dateFull
+        else if (this.options?.date && config?.dailyResponse) respose.date = blocks.dateInformation.dateFull
         resposeItems.push(menu)
       }
       );
@@ -106,9 +109,9 @@ class Client {
     //adds any additional data
     respose.menu = resposeItems.filter(menu => Object.keys(menu).length !== 0);
     if (config.dailyResponse === true) respose.menu = respose.menu[0]
-    if (options?.rawData) respose.rawData = res;
-    if (options?.url) respose.url = `${urls.public}/${this.school}`;
-    if (options?.apiURL) respose.apiURL = url;
+    if (this.options?.rawData) respose.rawData = res;
+    if (this.options?.url) respose.url = `${urls.public}/${this.school}`;
+    if (this.options?.apiURL) respose.apiURL = url;
 
     if (config.dailyResponse && respose.menu) return respose;
     else if (config?.dailyResponse === false) return respose;
@@ -117,7 +120,7 @@ class Client {
   async _check() {
     this.daily.emit('check', { message: `checked for new menu`, timestamp: Date.now() })
     const file = `${__dirname}\\lastRan.txt`
-    const today = new Date(Date.now()).toLocaleDateString()
+    const today = new Date(Date.now()).toISOString()
 
     if (!existsSync(file) || today !== readFileSync(file, 'utf8')) {
       const data = (await this.get(undefined, { dailyResponse: true }))

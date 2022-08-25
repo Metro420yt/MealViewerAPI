@@ -40,6 +40,8 @@ interface dailyResponse {
   apiURL?: string;
 }
 
+type eventTypes = 'newMenu' | 'check'
+
 
 export class Client {
   constructor(school: string, options?: optionsObject);
@@ -64,7 +66,7 @@ export class Client {
     * mv.daily.on('newMenu', data => {console.log(data)})
     * mv.daily.on('check', () => {console.log('new check')})
    */
-    on(event: string, listener: Function): void
+    on(event: eventTypes, listener: Function): void
     on(event: 'newMenu', listener: (data: dailyResponse) => void): void
     on(event: 'check', listener: () => void): void
     on(event: 'check', listener: (data: { message: string, timestamp: number }) => void): void

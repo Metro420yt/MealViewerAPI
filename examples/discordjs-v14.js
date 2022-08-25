@@ -3,11 +3,11 @@
     filters some results
     then sends an embed to users of the menu
 
-    discord.js version: 13
-    package.json: "discord.js": "~13.5.1"
+    discord.js version: 14
+    package.json: "discord.js": "~14.2.0"
 */
 
-const { MessageEmbed } = require('discord.js')
+const { EmbedBuilder } = require('discord.js')
 const { Client } = require('mealviewerapi')
 const mv = new Client('<mySchool>', { date: true, url: true, daily: true })
 
@@ -28,13 +28,14 @@ module.exports = (client) => {
     mv.daily.on('newMenu', async data => {
 
         // sets up the embed
-        const embed = new MessageEmbed({
-            author: { name: data.date.split('T')[0].split('-').join('/') },
+        const embed = new EmbedBuilder({
+            author: { name: new Date(data.date).toLocaleDateString() },
             title: 'Todays Menu',
             url: data.url
         })
 
         // adds a feild of any menu that is returned
+        const fields = []
         for (const key in data.menu) {
             if (['date'].includes(key)) continue;
             var values = data.menu[key].filter(v => !filter.includes(v)), extra = 0
@@ -45,8 +46,9 @@ module.exports = (client) => {
             }
 
             if (extra > 0) values.push(`*(${extra} more)*`)
-            embed.addField(key, values.join('\n'))
+            fields.push({ name: key, value: values.join('\n') })
         }
+        embed.addFields(fields)
 
         // sets the embed to all users in sendList
         for (const id of sendList) {
