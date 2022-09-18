@@ -10,12 +10,12 @@ const urls = {
 class Client {
   /**
    * @param {string} school
-  */
+   */
   constructor(school, options = {}) {
     // validates params
     if (!school || school === '<mySchool>') throw new Error("School name must be provided!");
-    if (typeof school !== 'string') throw new Error('Invalid school name!\n  Must be STRING')
-    for (const key in options) if (!['dailyInterval'].includes(key) && typeof options[key] !== 'boolean') throw new Error(`Invalid option value\n  ${key} must be a boolean`)
+    this._validate(school, 'string', 'school name')
+    this.school = school.split(' ').join('')
 
 
     // sets up daily check if in options
@@ -26,18 +26,31 @@ class Client {
         console.log('set dailyInterval to 30sec (30000ms)')
       }
 
-      this.school = school.split(' ').join('')
       this.daily = new EventEmitter()
       this._check()
       setInterval(async () => await this._check(), options.dailyInterval)
     }
     else this.daily = {
-      on: (...args) => {
-        throw new Error('`options.daily` or `options.dailyInterval` is undefined')
-      },
-      emit: (...args) => {
-        throw new Error('unable to emit event')
+      on: (...args) => { throw new Error('`options.daily` or `options.dailyInterval` is undefined') },
+      emit: (...args) => { throw new Error('unable to emit event') }
+    }
+
+
+    // formats return values
+    if (options.return) {
+      if (typeof options.return === 'string') options.return = [options.return]
+      const aliases = {
+        apiUrl: ['api'],
+        rawData: ['raw']
       }
+
+      var returnValues = {}
+      // url, api, raw
+      for (var value of options.return) {
+        for (const key in aliases) if (aliases[key].includes(value)) value = key
+        returnValues[value] = true
+      }
+      options.return = returnValues
     }
 
     this.options = options
@@ -46,7 +59,6 @@ class Client {
   /**
     * @param {string | number | object} [date] the date or timestamp to use.
     * @param {object} [config] the date or timestamp to use.
-    * @returns {Promise<{menu: object[], date?: string, rawData?: object, url?: string} | undefined>}
     * @example mv.get()
     * mv.get(1646666562)
     * mv.get('5/16/2022')
@@ -54,17 +66,16 @@ class Client {
    **/
   async get(date, config = { dailyResponse: false }) {
     //verifies  data
-    if (date && !['string', 'number', 'object'].includes(typeof date)) throw new Error("Invalid date!\n  Must be STRING, NUMBER or OBJECT");
-
+    if (date) this._validate(date, ['string', 'number', 'object'], 'date')
 
     //formats date
     if (!date || date === null) date = Date.now();
-    if (typeof date !== "object") {
+    if (typeof date !== 'object') {
       date = new Date(date).toISOString().split('T')[0]
       date = `${date}/${date}`;
     }
     else {
-      for (const key in date) if (!['string', 'number'].includes(date[key])) throw new Error(`Invalid ${key} date!\n  Must be a STRING, or NUMBER`)
+      for (const key in date) this._validate(date[key], ['string', 'number'], `${key} date`)
       if (!date.start) date.end = Date.now();
       if (!date.end) date.end = Date.now();
 
@@ -100,8 +111,8 @@ class Client {
         })
         //adds date and menu
         if (Object.keys(menu).length === 0) return;
-        if (this.options?.date && config?.dailyResponse === false) menu.date = blocks.dateInformation.dateFull
-        else if (this.options?.date && config?.dailyResponse) respose.date = blocks.dateInformation.dateFull
+
+        if (this.options?.return?.date) config?.dailyResponse ? respose.date = blocks.dateInformation.dateFull : menu.date = blocks.dateInformation.dateFull
         resposeItems.push(menu)
       }
       );
@@ -109,18 +120,26 @@ class Client {
     //adds any additional data
     respose.menu = resposeItems.filter(menu => Object.keys(menu).length !== 0);
     if (config.dailyResponse === true) respose.menu = respose.menu[0]
-    if (this.options?.rawData) respose.rawData = res;
-    if (this.options?.url) respose.url = `${urls.public}/${this.school}`;
-    if (this.options?.apiURL) respose.apiURL = url;
+
+    if (this.options?.return) {
+      const r = this.options?.return || {}
+      if (r.rawData) respose.rawData = res;
+      if (r.url) respose.url = `${urls.public}/${this.school}`;
+      if (r.apiUrl) respose.apiUrl = url;
+    }
 
     if (config.dailyResponse && respose.menu) return respose;
     else if (config?.dailyResponse === false) return respose;
   }
 
+  /**
+   * @private
+   * checks to see if its a new day, then runs the get function and emits newMenu if theres data
+  */
   async _check() {
     this.daily.emit('check', { message: `checked for new menu`, timestamp: Date.now() })
     const file = `${__dirname}\\lastRan.txt`
-    const today = new Date(Date.now()).toISOString()
+    const today = new Date(Date.now()).toLocaleDateString()
 
     if (!existsSync(file) || today !== readFileSync(file, 'utf8')) {
       const data = (await this.get(undefined, { dailyResponse: true }))
@@ -129,11 +148,18 @@ class Client {
       writeFileSync(file, today)
     }
   }
+
+  /**
+   * @private
+   * validates a values type
+  */
+  _validate(value, types, valueName) {
+    if (typeof types === 'string') types = [types]
+    if (!types.includes(typeof value)) throw new Error(`Invalid ${valueName || 'type'}\n  Must be ${types.map(t => t.toUpperCase())}`)
+  }
 }
 
 /**
- * @param {string} school the school to use.
- * @param {{rawData?: boolean, url?:boolean, date?: boolean, dailyInterval?: number}} [options] rawData: returns the response data, url: returns the api url, date: returns the date used, dailyInterval: time between checks in ms
  * @example const api = require('mealviewerapi')
  * const mv = new api('mySchool')
  * const mv = new api('mySchool', {rawData: true, date: true})

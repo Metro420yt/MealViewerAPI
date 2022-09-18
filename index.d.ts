@@ -1,50 +1,48 @@
 declare module "mealviewerapi";
 
-interface menuTypes {
+interface MenuTypes {
   breakfast?: string[];
   lunch?: string[];
   supper?: string[];
   snack?: string[];
 }
 
-interface optionsObject {
-  rawData?: boolean;
-  url?: boolean;
-  apiURL?: boolean;
-  date?: boolean;
+type ReturnTypes = 'raw' | 'rawData' | 'url' | 'apiUrl' | 'api' | 'date'
+interface Options {
+  return?: ReturnTypes[] | ReturnTypes
   daily?: boolean;
   dailyInterval?: number;
 }
 
-interface dateObject {
+interface Dates {
   start?: string | number;
   end?: string | number;
 }
 
-interface response extends menuTypes {
+interface Response {
+  rawData?: object;
+  url?: string;
+  apiURL?: string;
+}
+
+interface GetResponseMenus extends MenuTypes {
   date?: string
 }
 
-interface getResponse {
-  menu: response[];
-  rawData?: object;
-  url?: string;
-  apiURL?: string;
+interface GetResponse extends Response {
+  menu: GetResponseMenus[];
 }
 
-interface dailyResponse {
-  menu: menuTypes;
+interface EventResponse extends Response {
+  menu: MenuTypes;
   date?: string;
-  rawData?: object;
-  url?: string;
-  apiURL?: string;
 }
 
-type eventTypes = 'newMenu' | 'check'
+type EventTypes = 'newMenu' | 'check'
 
 
 export class Client {
-  constructor(school: string, options?: optionsObject);
+  constructor(school: string, options?: Options);
 
   /**
     * @example const {Client} = require('mealviewerapi')
@@ -55,9 +53,9 @@ export class Client {
     * mv.get({start: 1646666562, end: 1646666562})
    */
   public get(
-    date?: string | number | dateObject,
+    date?: string | number | Dates,
     config?: { dailyResponse: boolean }
-  ): Promise<getResponse> | Error;
+  ): Promise<GetResponse> | Error;
 
   public daily: {
     /**
@@ -66,11 +64,11 @@ export class Client {
     * mv.daily.on('newMenu', data => {console.log(data)})
     * mv.daily.on('check', () => {console.log('new check')})
    */
-    on(event: eventTypes, listener: Function): void
-    on(event: 'newMenu', listener: (data: dailyResponse) => void): void
+    on(event: EventTypes, listener: Function): void
+    on(event: 'newMenu', listener: (data: EventResponse) => void): void
     on(event: 'check', listener: () => void): void
     on(event: 'check', listener: (data: { message: string, timestamp: number }) => void): void
   }
 
-  private _check(): Promise<getResponse> | Error;
+  private _check(): Promise<GetResponse> | Error;
 }

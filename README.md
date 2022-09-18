@@ -1,35 +1,28 @@
-# Currently testing dev branch
-# Main release soon
-
 A lightweight wrapper for the [MealViewer](https://mealviewer.com/) API
 
-checkout the [examples](/examples) for ideas<br>
-submit your own ideas by creating a pull request
+Checkout the [examples](/examples) for ideas<br>
+Submit your own ideas by creating a pull request
 
 <br>
 
 ## Finding your school
-find your school by going to [MealViewer](https://schools.mealviewer.com/) and search for your school.
+Find your school by going to [MealViewer](https://schools.mealviewer.com/) and search for your school.
 
-the url will look like **https://schools.mealviewer.com/school/{YourSchool}**. take {YourSchool}, and put it in the Client constructor.
-
-flexible to show any listed menu type.
+The url will look like **https://schools.mealviewer.com/school/{YourSchool}**. take {YourSchool}, and put it in the Client constructor.
 <br><br>
 
 ## Changelog
 #### v2.0
-- refactored return object again
+- Refactored return object again
 
-```
+``` diff
 + {menu: [{lunch?: {}, etc...}], url?, date?, rawData?}
 - {items: [{lunch?: {}, etc...}], url?, date?, rawData?}
 ```
 <br>
 
-- added menu types for intellisense
-- changed urls
-
-```
+- Changed urls
+``` diff
 + response.url    => https://schools.mealviewer.com/school/{YourSchool}
 - response.url    => https://api.mealviewer.com/api/v4/school/{YourSchool}
 
@@ -37,36 +30,53 @@ flexible to show any listed menu type.
 ```
 <br>
 
-- Now using classes with constructor
+- Now using class
 
-```
+``` diff
 + new mv.Client(school, options?).get(date?)
 - mv.get(school, date?, options?)
 ```
 <br>
 
-- New daily checking event
+- Daily checking event
 
+``` diff
++ client.daily.on('newMenu', data => {})
 ```
-+ mv.daily.on('newDay', data => {})
+<br>
+
+- New return array/string to make it clearer what will be returned
+
+``` diff
++ new Client('mySchool', {return: ['date', 'url']})
+- new Client('mySchool', {date?, url?})
+```
+<br>
+
+- More return options
+
+``` diff
++ apiUrl, rawData
 ```
 
 <br>
 
+- Added menu types for intellisense
 - node-fetch dependancy is now set to v2 instead of ^v2
- - mealviewerapi is a CJS file, while node-fetch v3 is an ESM file making v3 unusable with CJS files
+ - mealviewerapi is a CJS project, while node-fetch v3 is an ESM file making v3 unusable with CJS files
+- [Code Examples](/examples)
 
 #### v1.5
 - get function now accepts start and end date
 
-```
+``` diff
 + mv.get(school, {start?, end?})
 ```
 
 
 - refactored return object
 
-```
+``` diff
 + {items: [{lunch?: {}}, etc...], url?, date?, rawData?}
 - {lunch?: {}, url?, date?, rawData?}
 ```
