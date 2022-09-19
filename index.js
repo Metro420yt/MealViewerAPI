@@ -39,15 +39,9 @@ class Client {
     // formats return values
     if (options.return) {
       if (typeof options.return === 'string') options.return = [options.return]
-      const aliases = {
-        apiUrl: ['api'],
-        rawData: ['raw']
-      }
 
       var returnValues = {}
-      // url, api, raw
       for (var value of options.return) {
-        for (const key in aliases) if (aliases[key].includes(value)) value = key
         returnValues[value] = true
       }
       options.return = returnValues
@@ -88,11 +82,11 @@ class Client {
     //fetches data
     const url = `${urls.api}/${this.school}/${date}`;
     const res = await (await fetch(url).catch(e => { throw new Error(e) })).json();
-    const resposeItems = [];
 
     //gets menu data from results.
     // this is a mess, just ignore it. it works. hard to explain how
     var respose = {}
+    const resposeItems = [];
 
     res.menuSchedules
       .forEach((blocks) => {
@@ -123,13 +117,13 @@ class Client {
 
     if (this.options?.return) {
       const r = this.options?.return || {}
-      if (r.rawData) respose.rawData = res;
+      if (r.raw) respose.raw = res;
       if (r.url) respose.url = `${urls.public}/${this.school}`;
       if (r.apiUrl) respose.apiUrl = url;
     }
 
-    if (config.dailyResponse && respose.menu) return respose;
-    else if (config?.dailyResponse === false) return respose;
+    if (config?.dailyResponse && !respose.menu) return;
+    return respose;
   }
 
   /**
@@ -160,8 +154,8 @@ class Client {
 }
 
 /**
- * @example const api = require('mealviewerapi')
- * const mv = new api('mySchool')
- * const mv = new api('mySchool', {rawData: true, date: true})
+ * @example const {Client} = require('mealviewerapi')
+ * const mv = new Client('mySchool')
+ * const mv = new Client('mySchool', {return: ['raw', 'date']})
  */
 exports.Client = Client

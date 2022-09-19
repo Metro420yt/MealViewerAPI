@@ -7,7 +7,7 @@ interface MenuTypes {
   snack?: string[];
 }
 
-type ReturnTypes = 'raw' | 'rawData' | 'url' | 'apiUrl' | 'api' | 'date'
+type ReturnTypes = 'raw' | 'url' | 'apiUrl' | 'date'
 interface Options {
   return?: ReturnTypes[] | ReturnTypes
   daily?: boolean;
@@ -20,7 +20,7 @@ interface Dates {
 }
 
 interface Response {
-  rawData?: object;
+  raw?: object;
   url?: string;
   apiURL?: string;
 }
@@ -55,7 +55,7 @@ export class Client {
   public get(
     date?: string | number | Dates,
     config?: { dailyResponse: boolean }
-  ): Promise<GetResponse> | Error;
+  ): Promise<GetResponse>;
 
   public daily: {
     /**
@@ -70,5 +70,5 @@ export class Client {
     on(event: 'check', listener: (data: { message: string, timestamp: number }) => void): void
   }
 
-  private _check(): Promise<GetResponse> | Error;
+  private _check(): Promise<GetResponse>;
 }
