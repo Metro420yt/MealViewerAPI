@@ -63,7 +63,7 @@ The url will look like **https://schools.mealviewer.com/school/{YourSchool}**. t
 
 - Added menu types for intellisense
 - node-fetch dependancy is now set to v2 instead of ^v2
- - mealviewerapi is a CJS project, while node-fetch v3 is an ESM file making v3 unusable with CJS files
+  - mealviewerapi is a CJS project, while node-fetch v3 is an ESM file making v3 unusable with CJS files
 - [Code Examples](/examples)
 
 #### v1.5
