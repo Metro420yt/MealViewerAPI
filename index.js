@@ -1,83 +1,161 @@
-const fetch = require("node-fetch");
+//@ts-check
+const { default: fetch } = require('node-fetch')
+const { EventEmitter } = require('events')
+const { existsSync, readFileSync, writeFileSync } = require('fs')
+const urls = {
+  api: 'https://api.mealviewer.com/api/v4/school',
+  public: 'https://schools.mealviewer.com/school'
+}
+
+class Client {
+  /**
+   * @param {string} school
+   */
+  constructor(school, options = {}) {
+    // validates params
+    if (!school || school === '<mySchool>') throw new Error("School name must be provided!");
+    this._validate(school, 'string', 'school name')
+    this.school = school.split(' ').join('')
+
+
+    // sets up daily check if in options
+    if (options?.daily || options?.dailyInterval) {
+      if (!options.dailyInterval) options.dailyInterval = 3600000
+      else if (options.dailyInterval < 1000) {
+        options.dailyInterval = 30000
+        console.log('set dailyInterval to 30sec (30000ms)')
+      }
+
+      this.daily = new EventEmitter()
+      this._check()
+      setInterval(async () => await this._check(), options.dailyInterval)
+    }
+    else this.daily = {
+      on: (...args) => { throw new Error('`options.daily` or `options.dailyInterval` is undefined') },
+      emit: (...args) => { throw new Error('unable to emit event') }
+    }
+
+
+    // formats return values
+    if (options.return) {
+      if (typeof options.return === 'string') options.return = [options.return]
+
+      var returnValues = {}
+      for (var value of options.return) {
+        returnValues[value] = true
+      }
+      options.return = returnValues
+    }
+
+    this.options = options
+  }
+
+  /**
+    * @param {string | number | object} [date] the date or timestamp to use.
+    * @param {object} [config] the date or timestamp to use.
+    * @example mv.get()
+    * mv.get(1646666562)
+    * mv.get('5/16/2022')
+    * mv.get({start: 1646666562, end: 1646666562})
+   **/
+  async get(date, config = { dailyResponse: false }) {
+    //verifies  data
+    if (date) this._validate(date, ['string', 'number', 'object'], 'date')
+
+    //formats date
+    if (!date || date === null) date = Date.now();
+    if (typeof date !== 'object') {
+      date = new Date(date).toISOString().split('T')[0]
+      date = `${date}/${date}`;
+    }
+    else {
+      for (const key in date) this._validate(date[key], ['string', 'number'], `${key} date`)
+      if (!date.start) date.end = Date.now();
+      if (!date.end) date.end = Date.now();
+
+      date.start = new Date(date.start).toISOString().split('T')[0]
+      date.end = new Date(date.end).toISOString().split('T')[0]
+      date = `${date.start}/${date.end}`;
+    }
+
+
+    //fetches data
+    const url = `${urls.api}/${this.school}/${date}`;
+    const res = await (await fetch(url).catch(e => { throw new Error(e) })).json();
+
+    //gets menu data from results.
+    // this is a mess, just ignore it. it works. hard to explain how
+    var respose = {}
+    const resposeItems = [];
+
+    res.menuSchedules
+      .forEach((blocks) => {
+        var menu = {}
+        blocks.menuBlocks.forEach((block) => {
+          //gets items array
+          const items = [];
+          block.cafeteriaLineList.data[0].foodItemList.data
+            .map((food) => food.item_Name.toLowerCase())
+            .forEach((item) => {
+              if (!items.includes(item)) items.push(item);
+            });
+
+          //adds items to menu
+          menu[block.blockName.toLowerCase()] = items;
+        })
+        //adds date and menu
+        if (Object.keys(menu).length === 0) return;
+
+        if (this.options?.return?.date) config?.dailyResponse ? respose.date = blocks.dateInformation.dateFull : menu.date = blocks.dateInformation.dateFull
+        resposeItems.push(menu)
+      }
+      );
+
+    //adds any additional data
+    respose.menu = resposeItems.filter(menu => Object.keys(menu).length !== 0);
+    if (config.dailyResponse === true) respose.menu = respose.menu[0]
+
+    if (this.options?.return) {
+      const r = this.options?.return || {}
+      if (r.raw) respose.raw = res;
+      if (r.url) respose.url = `${urls.public}/${this.school}`;
+      if (r.apiUrl) respose.apiUrl = url;
+    }
+
+    if (config?.dailyResponse && !respose.menu) return;
+    return respose;
+  }
+
+  /**
+   * @private
+   * checks to see if its a new day, then runs the get function and emits newMenu if theres data
+  */
+  async _check() {
+    this.daily.emit('check', { message: `checked for new menu`, timestamp: Date.now() })
+    const file = `${__dirname}\\lastRan.txt`
+    const today = new Date(Date.now()).toLocaleDateString()
+
+    if (!existsSync(file) || today !== readFileSync(file, 'utf8')) {
+      const data = (await this.get(undefined, { dailyResponse: true }))
+
+      if (data !== undefined) this.daily.emit('newMenu', data)
+      writeFileSync(file, today)
+    }
+  }
+
+  /**
+   * @private
+   * validates a values type
+  */
+  _validate(value, types, valueName) {
+    if (typeof types === 'string') types = [types]
+    if (!types.includes(typeof value)) throw new Error(`Invalid ${valueName || 'type'}\n  Must be ${types.map(t => t.toUpperCase())}`)
+  }
+}
 
 /**
- * @param {string} school the school to return.
- * @param {string | number | object} [date] the date or timestamp to use.
- * @param {{rawData?: boolean, url?:boolean, date?: boolean}} [options] rawData: returns the response data, url: returns the api url, date: returns the date used
- * @returns {Promise<{items: object[], date?: string, rawData?: object, url?: string}> | Error}
- * @example api.get('mySchool')
- * api.get('mySchool', 1646666562)
- * api.get('mySchool', null, {rawData: true, url: true})
+ * @example const {Client} = require('mealviewerapi')
+ * const mv = new Client('mySchool')
+ * const mv = new Client('mySchool', {return: ['raw', 'date']})
  */
-exports.get = async (school, date, options) => {
-  const baseURL = "https://api.mealviewer.com/api/v4/school";
-
-  //verifies  data
-  if (!school) throw new Error("School name must be provided!");
-  if (typeof school !== "string") throw new Error("Invalid school name!\n  Must be STRING");
-  school = school.split(' ').join('')
-
-  if (date && (
-    typeof date !== "string" &&
-    typeof date !== "number" &&
-    typeof date !== "object")
-  ) throw new Error("Invalid date!\n  Must be STRING, NUMBER or OBJECT");
-
-  //formats date
-  if (!date || date === null) date = Date.now();
-
-  if (typeof date !== "object") {
-    date = new Date(date).toLocaleDateString().split("/").join("-");
-    date = `${date}/${date}`;
-  }
-  else {
-    if (
-      typeof date.start !== "string" &&
-      typeof date.start !== "number" &&
-      typeof date.end !== "string" &&
-      typeof date.end !== "number"
-    ) throw new Error("Invalid end/start date!\n  Must be a STRING, or NUMBER");
-
-    if (!date.start) date.end = Date.now();
-    if (!date.end) date.end = Date.now();
-
-    date.start = new Date(date.start).toLocaleDateString().split("/").join("-");
-    date.end = new Date(date.end).toLocaleDateString().split("/").join("-");
-    date = `${date.start}/${date.end}`;
-  }
-
-  //fetches data
-  const url = `${baseURL}/${school}/${date}`;
-  const res = await (await fetch(url).catch(e => { throw new Error(e) })).json();
-  
-  const resposeItems = [];
-
-  //gets menu data from results
-  res.menuSchedules
-    .forEach((blocks) => {
-      var menu = {}
-      blocks.menuBlocks.forEach((block) => {
-        //gets items array
-        const items = [];
-        block.cafeteriaLineList.data[0].foodItemList.data
-          .map((food) => food.item_Name.toLowerCase())
-          .forEach((item) => {
-            if (!items.includes(item)) items.push(item);
-          });
-
-        //adds items to menu
-        menu[block.blockName.toLowerCase()] = items;
-      })
-      //adds date and menu
-      if (options?.date && Object.keys(menu).length !== 0) menu.date = blocks.dateInformation.dateFull
-      resposeItems.push(menu)
-    }
-    );
-
-  //adds any additional data
-  var respose = {items: resposeItems.filter(menu=>Object.keys(menu).length !== 0)};
-  if (options?.rawData) respose.rawData = res;
-  if (options?.url) respose.url = url;
-
-  return respose;
-};
+exports.Client = Client
