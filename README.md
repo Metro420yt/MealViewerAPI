@@ -1,3 +1,6 @@
+> [!WARNING]
+> No longer maintained
+
 A lightweight wrapper for the [MealViewer](https://mealviewer.com/) API
 
 Checkout the [examples](/examples) for ideas<br>
