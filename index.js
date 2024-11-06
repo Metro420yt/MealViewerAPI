@@ -10,6 +10,7 @@ const urls = {
 class Client {
   /**
    * @param {string} school
+   * @param {import('./index.d.ts').Options} options
    */
   constructor(school, options = {}) {
     // validates params
@@ -51,7 +52,7 @@ class Client {
   }
 
   /**
-    * @param {string | number | object} [date] the date or timestamp to use.
+    * @param {string | EpochTimeStamp | object} [date] the date or timestamp to use.
     * @param {object} [config] the date or timestamp to use.
     * @example mv.get()
     * mv.get(1646666562)

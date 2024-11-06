@@ -10,10 +10,7 @@
     "api",
     "wrapper"
   ],
-  "author": {
-    "name": "Metro420YT",
-    "url": "https://bit.ly/Metro420YT"
-  },
+  "author": "metro420",
   "license": "ISC",
   "repository": {
     "type": "git",

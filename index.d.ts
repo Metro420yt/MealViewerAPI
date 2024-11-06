@@ -1,11 +1,6 @@
 declare module "mealviewerapi";
 
-interface MenuTypes {
-  breakfast?: string[];
-  lunch?: string[];
-  supper?: string[];
-  snack?: string[];
-}
+type MenuTypes = 'breakfast' | 'lunch' | 'supper' | 'snack'
 
 type ReturnTypes = 'raw' | 'url' | 'apiUrl' | 'date'
 interface Options {
@@ -14,9 +9,10 @@ interface Options {
   dailyInterval?: number;
 }
 
+type DateLike = `${number}/${number}/${number}`
 interface Dates {
-  start?: string | number;
-  end?: string | number;
+  start?: DateLike;
+  end?: DateLike;
 }
 
 interface Response {
@@ -25,7 +21,7 @@ interface Response {
   apiURL?: string;
 }
 
-interface GetResponseMenus extends MenuTypes {
+interface GetResponseMenus extends Partial<Record<MenuTypes, string[]>> {
   date?: string
 }
 
@@ -34,7 +30,7 @@ interface GetResponse extends Response {
 }
 
 interface EventResponse extends Response {
-  menu: MenuTypes;
+  menu: Partial<Record<MenuTypes, string[]>>
   date?: string;
 }
 
@@ -53,7 +49,7 @@ export class Client {
     * mv.get({start: 1646666562, end: 1646666562})
    */
   public get(
-    date?: string | number | Dates,
+    date?: DateLike | Dates,
     config?: { dailyResponse: boolean }
   ): Promise<GetResponse>;
 
@@ -67,7 +63,7 @@ export class Client {
     on(event: EventTypes, listener: Function): void
     on(event: 'newMenu', listener: (data: EventResponse) => void): void
     on(event: 'check', listener: () => void): void
-    on(event: 'check', listener: (data: { message: string, timestamp: number }) => void): void
+    on(event: 'check', listener: (data: { message: string, timestamp: EpochTimeStamp }) => void): void
   }
 
   private _check(): Promise<GetResponse>;
