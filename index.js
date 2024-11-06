@@ -1,5 +1,4 @@
 //@ts-check
-const { default: fetch } = require('node-fetch')
 const { EventEmitter } = require('events')
 const { existsSync, readFileSync, writeFileSync } = require('fs')
 const urls = {
@@ -10,7 +9,7 @@ const urls = {
 class Client {
   /**
    * @param {string} school
-   * @param {import('./index.d.ts').Options} options
+   * @param {import('./index.d.ts').ConstructorOptions} options
    */
   constructor(school, options = {}) {
     // validates params
@@ -36,20 +35,22 @@ class Client {
       emit: (...args) => { throw new Error('unable to emit event') }
     }
 
+    //@ts-ignore
+    this.options = options
 
     // formats return values
     if (options.return) {
       if (typeof options.return === 'string') options.return = [options.return]
 
-      var returnValues = {}
-      for (var value of options.return) {
-        returnValues[value] = true
-      }
-      options.return = returnValues
+      /**@type {Partial<Record<import('./index.d.ts').ReturnTypes, boolean>>}*/
+      var returnValues = Object.fromEntries(options.return.map(key => [key, true]))
+      this.options.return = returnValues
     }
 
-    this.options = options
   }
+
+  /**@type {import('./index.d.ts').Options}*/
+  options
 
   /**
     * @param {string | EpochTimeStamp | object} [date] the date or timestamp to use.

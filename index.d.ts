@@ -3,8 +3,11 @@ declare module "mealviewerapi";
 type MenuTypes = 'breakfast' | 'lunch' | 'supper' | 'snack'
 
 type ReturnTypes = 'raw' | 'url' | 'apiUrl' | 'date'
-interface Options {
+type ConstructorOptions = Omit<Options, 'return'> & {
   return?: ReturnTypes[] | ReturnTypes
+}
+interface Options {
+  return?: Partial<Record<ReturnTypes, boolean>>
   daily?: boolean;
   dailyInterval?: number;
 }
@@ -38,7 +41,7 @@ type EventTypes = 'newMenu' | 'check'
 
 
 export class Client {
-  constructor(school: string, options?: Options);
+  constructor(school: string, options?: ConstructorOptions);
 
   /**
     * @example const {Client} = require('mealviewerapi')
